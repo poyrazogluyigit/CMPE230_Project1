@@ -273,9 +273,11 @@ struct mapElement* expand(struct mapElement arr[]){
     return newVariables;
 }
 
-void put(struct mapElement arr[], char *key, int value){
+void put(struct mapElement arr[], int nOfElements, char *key, int value){
     if (nOfElements == sizeof(arr)/sizeof(arr[0])){
+        struct mapElement *toBeDeleted = arr;
         arr = expand(arr);
+        free(toBeDeleted);
     }
     put_func(arr, key, value);
 }
