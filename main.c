@@ -459,7 +459,15 @@ void reduce(int rule){
             push(tokenStack, TOKEN, token);
             break;
         }
-        case 2:
+        case 2:{
+            struct token* token = (struct token*) pop(tokenStack);
+            pop(tokenStack);
+            struct token* var = (struct token*) pop(tokenStack);
+            put(variables, noelem, var->value, strtoll(token->value, NULL, 10));
+            token->type = S;
+            push(tokenStack, TOKEN, token);
+            break;
+        }
         case 3:{
             pop(tokenStack);
             struct token* token = (struct token*) pop(tokenStack);
@@ -507,6 +515,7 @@ void reduce(int rule){
         }
         case 11:{
             struct token* token = (struct token*) pop(tokenStack);
+            token->value = variables[token->value];
             //get value from hashmap, change value
             //ATTENTION CITIZEN! SOCIAL CREDIT DEDUCTION
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
