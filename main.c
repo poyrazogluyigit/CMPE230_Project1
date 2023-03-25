@@ -436,7 +436,7 @@ int main(){
             printf("Error!\n");
         }
         struct token nextToken = tokens[tokenIndex+1];
-        int action[] = table[peek(stateStack)][nextToken.type];
+        int action[] = parsingTable[*((int*)peek(stateStack))][nextToken.type];
         switch (action[0]){
             case -1: {
                 if (tokens[1].type != EQ) printf("%s", ((struct token *) peek(tokenStack))->value);
