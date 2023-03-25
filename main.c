@@ -348,6 +348,8 @@ void* peek(struct Stack *stack){
 struct token tokens[256];
 struct Stack *stateStack;
 struct Stack *tokenStack;
+struct mapElement *variables;
+int noelem = 0;
 
 
 long long arithmetic(struct token* operator, struct token* leftoperand, struct token* rightoperand){
@@ -550,29 +552,29 @@ int main(){
 }
 
     //start reading input
-    while (fgets(msgbuf, sizeof(msgbuf), stdin)){
+    while (fgets(msgbuf, sizeof(msgbuf), stdin)) {
         if (msgbuf == NULL) break;
-        
+
         //execute search
         regexVal = regexec(&regex, msgbuf, 1, match, 0);
 
         int lastPtr = 0;
-        
+
         int i = 0;
         //look for all matches in the line
-        while (regexVal == 0){
+        while (regexVal == 0) {
 
             int startBuffer = match[0].rm_so;
             int endBuffer = match[0].rm_eo;
             int len = endBuffer - startBuffer;
 
             //copy the match to a string
-            char tokenStr[len+1];
-            strncpy(tokenStr, msgbuf+lastPtr+startBuffer, len);
+            char tokenStr[len + 1];
+            strncpy(tokenStr, msgbuf + lastPtr + startBuffer, len);
             tokenStr[len] = '\0';
-        
+
             //tokenize and add to array
-            if (!isspace((int) tokenStr[0])){
+            if (!isspace((int) tokenStr[0])) {
                 struct token token = tokenize(tokenStr, len);
                 tokens[i] = token;
                 i++;
@@ -584,40 +586,45 @@ int main(){
         }
 
         //parsing block
-    }
-    while(continuation_condition){
         stateStack = createStack();
         tokenStack = createStack();
+        initMap(variables, 100);
         push(stateStack, STATE, 0);
         int condition = 1;
-        while (condition){
-            if (tokenIndex == sizeof(tokens)/sizeof(tokens[0])){
+        while (condition) {
+            if (tokenIndex == sizeof(tokens) / sizeof(tokens[0])) {
                 printf("Error!\n");
             }
-            struct token nextToken = tokens[tokenIndex+1];
-            int action[] = parsingTable[*((int*)peek(stateStack))][nextToken.type];
-            switch (action[0]){
+            struct token nextToken = tokens[tokenIndex + 1];
+            int action[] = parsingTable[*((int *) peek(stateStack))][nextToken.type];
+            switch (action[0]) {
                 case -1: {
                     if (tokens[1].type != EQ) printf("%s", ((struct token *) peek(tokenStack))->value);
                     condition = 0;
                     break;
                 }
-                case 0: printf("Error!\n"); condition = 0; break;
-                case 1: shift(action[1], nextToken.type); tokenIndex++; break;
-                case 2: reduce(action[1]); break;
-                case 3: goTo(nextToken.type); tokenIndex++; break;
+                case 0:
+                    printf("Error!\n");
+                    condition = 0;
+                    break;
+                case 1:
+                    shift(action[1], nextToken.type);
+                    tokenIndex++;
+                    break;
+                case 2:
+                    reduce(action[1]);
+                    break;
+                case 3:
+                    goTo(nextToken.type);
+                    tokenIndex++;
+                    break;
             }
-
         }
         free(stateStack);
         free(tokenStack);
         free(tokens);
+        regfree(&regex);
+        return 0;
     }
-
-
-
-    regfree(&regex);
-    return 0;
-
 }
 
