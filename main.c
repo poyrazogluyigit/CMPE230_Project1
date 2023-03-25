@@ -12,7 +12,7 @@ int regexVal;
 char msgbuf[257];
 
 struct token tokens[256];
-
+int tokenIndex = 0;
 
 
 //enum corresponding to non-terminals and terminals 
@@ -274,7 +274,14 @@ void reduce(int rule){
 
 }
 
+void goTo(int token){
+    push(tokenStack, TOKEN, (void *)token);
+}
 
+void shift(int state, int token){
+    push(stateStack, STATE, state);
+    goTo(token);
+}
 
 
 
