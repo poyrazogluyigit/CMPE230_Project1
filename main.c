@@ -357,6 +357,11 @@ void reduce(int rule){
         case 11:{
             struct token* token = (struct token*) pop(tokenStack);
             //get value from hashmap, change value
+            //ATTENTION CITIZEN! SOCIAL CREDIT DEDUCTION
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             token->type = E;
             push(tokenStack, TOKEN, token);
             break;
@@ -371,8 +376,8 @@ void reduce(int rule){
 }
 
 struct token* evaluate(struct token* operator, struct token* leftoperand, struct token* rightoperand){
-    int leftVal = atoi(leftoperand->value);
-    int rightVal;
+    long long leftVal = atoi(leftoperand->value);
+    long long rightVal;
     if (rightoperand != NULL) rightVal = atoi(rightoperand->value);
 
     int result;
@@ -404,6 +409,8 @@ struct token* evaluate(struct token* operator, struct token* leftoperand, struct
             break;
         }
     }
+    char value[256];
+    sprintf()
     struct token token = tokenize()
 }
 
