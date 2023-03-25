@@ -348,9 +348,7 @@ void reduce(int rule){
         case 6:
         case 7:
         case 8:
-        case 9:{
-            str(atoi(leftoperand->value) + atoi(rightoperand->value))
-        }
+        case 9:
         case 10:{
             struct token* rightOperand = (struct token*) pop(tokenStack);
             struct token* operator = (struct token*) pop(tokenStack);
