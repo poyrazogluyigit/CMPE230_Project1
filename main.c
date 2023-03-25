@@ -269,9 +269,12 @@ void* peek(struct Stack *stack){
         return (void *)data;
     }
 }
-
+struct Stack *stateStack;
+struct Stack *tokenStack;
 
 int main(){
+    stateStack = createStack();
+    tokenStack = createStack();
 
     //compile the regex pattern
     regexVal = regcomp(&regex, "[a-zA-Z0-9]+|[^[:alnum:]]", REG_EXTENDED);
