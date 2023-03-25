@@ -275,7 +275,7 @@ void reduce(int rule){
 }
 
 void goTo(int token){
-    push(tokenStack, TOKEN, (void *)token);
+    push(tokenStack, TOKEN, token);
 }
 
 void shift(int state, int token){
@@ -346,9 +346,25 @@ int main(){
 
 
     }
+    push(stateStack, STATE, 0);
+    while (1){
+        if (tokenIndex == sizeof(tokens)/sizeof(tokens[0])){
+            printf("Error!\n");
+        }
+        struct token nextToken = tokens[tokenIndex+1];
+        int action[] = table[peek(stateStack)][nextToken.type];
+        switch (action[0]){
+            case -1: {
+                if (tokens[1].type != EQ) printf("%s", ((struct token *) peek(tokenStack))->value);
+                return 0;
+            }
+            case 0: printf("Error!\n"); return 0;
+            case 1: shift(action[1], nextToken.type); tokenIndex++; break;
+            case 2: reduce(action[1]); break;
+            case 3: goTo(nextToken.type); tokenIndex++; break;
+        }
 
-
-
+    }
 
 
     regfree(&regex);
