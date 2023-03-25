@@ -221,11 +221,17 @@ struct token tokenize(char *string, int len){
 
 
 //initialize mapElement array
-void initMap(struct mapElement arr[], int len){
-    for (int i = 0; i < len; i++){
-        arr[i].key = "";
-        arr[i].value = 0;
+struct mapElement* initMap(int len){
+    struct mapElement *newVariables = (struct mapElement *)calloc(len + 1, sizeof(struct mapElement));
+    struct mapElement lenHolder;
+    lenHolder.key = "len";
+    lenHolder.value = len;
+    newVariables[0] = lenHolder;
+    for (int i = 1; i < len+1; i++){
+        newVariables[i].key = "";
+        newVariables[i].value = 0;
     }
+    return newVariables;
 }
 
 //hash function for the map
@@ -237,11 +243,14 @@ int hashFunction(char *key, int len){
     return hash % len;
 }
 
-void put_func(struct mapElement arr[], char *key, int value){
-    int hash = hashFunction(key, sizeof(arr)/sizeof(arr[0]));
+
+
+
+void put_func(struct mapElement* arr, char *key, int value){
+    int hash = hashFunction(key, arr[0].value);
     int i = 0;
-    while (arr[hash].key != ""){
-        hash = (hash + i) % 100;
+    while (strcmp(arr[hash].key, "") != 0){
+        hash = (hash + i) % arr[0].value;
         i++;
     }
     arr[hash].key = key;
@@ -249,12 +258,12 @@ void put_func(struct mapElement arr[], char *key, int value){
 }
 
 //get the value of a key
-int get(struct mapElement arr[], char *key){
-    int len = sizeof(arr)/sizeof(arr[0]);
+int get(struct mapElement* arr, char *key){
+    int len = arr[0].value; //get the length of the array
     int hash = hashFunction(key, len);
     int i = 0;
     while (arr[hash].key != key){
-        hash = (hash + i) % 100;
+        hash = (hash + i) % len;
         i++;
         if (i == len) return 0;
     }
@@ -263,25 +272,23 @@ int get(struct mapElement arr[], char *key){
 
 
 //expand the size of the hashtable
-struct mapElement* expand(struct mapElement arr[]){
-    int len = (sizeof arr)/sizeof(arr[0]);
-    struct mapElement *newVariables = (struct mapElement *)malloc(2 * sizeof(arr));
-    initMap(newVariables, 2*len);
+struct mapElement* expand(struct mapElement* arr){
+    int len = arr[0].value;
+    struct mapElement *new = initMap(2*len);
     for (int i = 0; i < 2*len; i++){
-        put_func(newVariables, arr[i].key, arr[i].value);
+        put_func(new, arr[i].key, arr[i].value);
     }
-    return newVariables;
+    free(arr);
+    arr = new;
+    return arr;
 }
 
-void put(struct mapElement arr[], int nOfElements, char *key, int value){
-    if (nOfElements == sizeof(arr)/sizeof(arr[0])){
-        struct mapElement *toBeDeleted = arr;
+void put(struct mapElement* arr, int nOfElements, char *key, int value){
+    if (nOfElements == arr[0].value){
         arr = expand(arr);
-        free(toBeDeleted);
     }
     put_func(arr, key, value);
 }
-
 struct Stack *createStack(){
     struct Stack *stack = (struct Stack *)malloc(sizeof(struct Stack));
     stack->top = NULL;
@@ -577,15 +584,6 @@ int main(){
         }
 
         //parsing block
-
-
-
-
-
-
-
-
-
     }
     while(continuation_condition){
         stateStack = createStack();
