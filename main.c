@@ -2,6 +2,7 @@
 #include <regex.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #define TOKEN_SIZE 256
        
@@ -270,9 +271,6 @@ void* peek(struct Stack *stack){
     }
 }
 
-char* itos(int number){
-    
-}
 
 void goTo(int token){
     push(tokenStack, TOKEN, token);
