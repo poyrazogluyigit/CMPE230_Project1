@@ -13,6 +13,7 @@ int regexVal;
 char msgbuf[257];
 
 struct token tokens[256];
+struct HashMap *variables;
 int tokenIndex = 0;
 
 
@@ -72,9 +73,15 @@ struct Stack {
     int size;
 };
 
+struct mapElement {
+    char key[256];
+    long long value;
+};
 
-
-
+struct HashMap {
+    int size;
+    struct mapElement elements[];
+};
 
 
 const char *strings[] = {"S", "V", "E", "F", "I", "NOT", "AND", "OR", "MULT", "ADD", "COMM", "SUB", "OBR", "CBR", "EQ"};
@@ -214,6 +221,15 @@ struct token tokenize(char *string, int len){
     return token;
 }
 
+struct HashMap *createHashMap(){
+    struct HashMap *map = (struct HashMap *)malloc(sizeof(struct HashMap));
+    map->size = 0;
+    for (int i = 0; i < 100; i++){
+        map->table[i] = NULL;
+    }
+    return map;
+}
+
 
 struct Stack *createStack(){
     struct Stack *stack = (struct Stack *)malloc(sizeof(struct Stack));
@@ -271,6 +287,30 @@ void* peek(struct Stack *stack){
     }
 }
 
+// standard function to convert long long to string:
+char* lltoa(long long value, char* result) {
+    int base = 10;
+
+    char* ptr = result, *ptr1 = result, tmp_char;
+    long long tmp_value;
+
+    do {
+        tmp_value = value;
+        value /= base;
+        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"[35 + (tmp_value - value * base)];
+    } while ( value );
+
+    // Apply negative sign
+    if (tmp_value < 0) *ptr++ = '-';
+    *ptr-- = '\0';
+    while(ptr1 < ptr) {
+        tmp_char = *ptr;
+        *ptr--= *ptr1;
+        *ptr1++ = tmp_char;
+    }
+    return result;
+}
+
 
 void goTo(int token){
     push(tokenStack, TOKEN, token);
@@ -308,7 +348,9 @@ void reduce(int rule){
         case 6:
         case 7:
         case 8:
-        case 9:
+        case 9:{
+            str(atoi(leftoperand->value) + atoi(rightoperand->value))
+        }
         case 10:{
             
         }
