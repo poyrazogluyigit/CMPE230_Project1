@@ -18,21 +18,23 @@ struct token tokens[256];
 //enum corresponding to non-terminals and terminals 
 //declared within the grammar of the language.
 enum type{
-    S, 
-    V,    //terminal? data type
-    E,
-    F,    //terminal data type
-    I,    //terminal data type
-    NOT, 
-    AND,        //38 (5 mod 11)
-    OR,         //124 (3 mod 11)
-    MULT,       //42 (9 mod 11)
-    ADD,        //43 (10 mod 11)
+    V, 
+    EQ,          //61 (6 mod 11)
+    OBR,         //40 (7 mod 11)
+    CBR,         //41 (8 mod 11)
+    F,   
     COMM,       //44 (0 mod 11)
+    NOT,        
+    AND,         //38 (5 mod 11)
+    OR,          //124 (3 mod 11)
+    MULT,        //42 (9 mod 11)
+    ADD,       //43 (10 mod 11)
     SUB,        //45 (1 mod 11)
-    OBR,        //40 (7 mod 11)
-    CBR,        //41 (8 mod 11)
-    EQ          //61 (6 mod 11)
+    I,        
+    EOL,        
+    Sp,
+    S,
+    E          
 
 };
 
@@ -205,8 +207,6 @@ enum type getType(char *string, int len){
 //undefined for whitespaces.
 struct token tokenize(char *string, int len){
     enum type type = getType(string, len);
-    //char tokSt[len+1];
-    //strncpy(tokSt, string, len+1);
     struct token token;
     token.type = type;
     strncpy(token.value, string, len+1);
@@ -269,6 +269,16 @@ void* peek(struct Stack *stack){
         return (void *)data;
     }
 }
+
+void reduce(int rule){
+
+}
+
+
+
+
+
+
 struct Stack *stateStack;
 struct Stack *tokenStack;
 
@@ -306,6 +316,12 @@ int main(){
             strncpy(tokenStr, msgbuf+lastPtr+startBuffer, len);
             tokenStr[len] = '\0';
         
+            //tokenize and add to array
+            if (!isspace((int) tokenStr[0])){
+                struct token token = tokenize(tokenStr, len);
+                tokens[i] = token;
+                i++;
+            }
 
             //go to next match
             lastPtr += endBuffer;
