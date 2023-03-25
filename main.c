@@ -12,8 +12,7 @@ regmatch_t match[1];
 int regexVal;
 char msgbuf[257];
 
-struct token tokens[256];
-struct HashMap *variables;
+
 int tokenIndex = 0;
 
 
@@ -71,17 +70,13 @@ struct Node {
 struct Stack {
     struct Node *top;
     int size;
-};
+} Stack;
+
 
 struct mapElement {
-    char key[256];
+    char *key;
     long long value;
-};
-
-struct HashMap {
-    int size;
-    struct mapElement elements[];
-};
+} mapElement;
 
 
 const char *strings[] = {"S", "V", "E", "F", "I", "NOT", "AND", "OR", "MULT", "ADD", "COMM", "SUB", "OBR", "CBR", "EQ"};
@@ -221,15 +216,60 @@ struct token tokenize(char *string, int len){
     return token;
 }
 
-struct HashMap *createHashMap(){
-    struct HashMap *map = (struct HashMap *)malloc(sizeof(struct HashMap));
-    map->size = 0;
-    for (int i = 0; i < 100; i++){
-        map->table[i] = NULL;
+
+//initialize mapElement array
+void initMap(struct mapElement arr[], int len){
+    for (int i = 0; i < len; i++){
+        arr[i].key = "";
+        arr[i].value = 0;
     }
-    return map;
 }
 
+//hash function for the map
+int hashFunction(char *key, int len){
+    int hash = 0;
+    for (int i = 0; i < strlen(key); i++){
+        hash = hash + (int)key[i];
+    }
+    return hash % len;
+}
+
+void put(struct mapElement arr[], char *key, int value){
+
+    int hash = hashFunction(key, sizeof(arr)/sizeof(arr[0]));
+    int i = 0;
+    while (arr[hash].key != ""){
+        hash = (hash + i) % 100;
+        i++;
+    }
+    arr[hash].key = key;
+    arr[hash].value = value;
+}
+
+//get the value of a key
+int get(struct mapElement arr[], char *key){
+    int len = sizeof(arr)/sizeof(arr[0]);
+    int hash = hashFunction(key, len);
+    int i = 0;
+    while (arr[hash].key != key){
+        hash = (hash + i) % 100;
+        i++;
+        if (i == len) return 0;
+    }
+    return arr[hash].value;
+}
+
+
+//expand the size of the hashtable
+struct mapElement* expand(struct mapElement arr[]){
+    int len = (sizeof arr)/sizeof(arr[0]);
+    struct mapElement *newVariables = (struct mapElement *)malloc(2 * sizeof(arr));
+    initMap(newVariables, 2*len);
+    for (int i = 0; i < 2*len; i++){
+        put(newVariables, arr[i].key, arr[i].value);
+    }
+    return newVariables;
+}
 
 struct Stack *createStack(){
     struct Stack *stack = (struct Stack *)malloc(sizeof(struct Stack));
@@ -287,12 +327,17 @@ void* peek(struct Stack *stack){
     }
 }
 
+struct token tokens[256];
+struct Stack *stateStack;
+struct Stack *tokenStack;
+
+
 void goTo(int token){
-    push(tokenStack, TOKEN, token);
+    push(tokenStack, TOKEN, (void*)token);
 }
 
 void shift(int state, int token){
-    push(stateStack, STATE, state);
+    push(stateStack, STATE, (void*)state);
     goTo(token);
 }
 
@@ -318,16 +363,43 @@ void reduce(int rule){
             push(tokenStack, TOKEN, token);
             break;
         }
-        case 4:
-        case 5:
+        case 4:{
+            pop(tokenStack);
+            struct token* rightOperand = (struct token*) pop(tokenStack);
+            pop(tokenStack);
+            struct token* leftOperand = (struct token*) pop(tokenStack);
+            pop(tokenStack);
+            struct token* function = (struct token*) pop(tokenStack);
+            char value[256];
+            sprintf(value, "%lld", evaluate(function, leftOperand, rightOperand));
+            struct token newtoken = tokenize(value, strlen(value));
+            push(tokenStack, TOKEN, &newtoken);
+            break;
+        }
+        case 5:{
+            pop(tokenStack);
+            struct token* leftOperand = (struct token*) pop(tokenStack);
+            pop(tokenStack);
+            struct token* function = (struct token*) pop(tokenStack);
+            char value[256];
+            sprintf(value, "%lld", evaluate(function, leftOperand, NULL));
+            struct token newtoken = tokenize(value, strlen(value));
+            push(tokenStack, TOKEN, &newtoken);
+            break;
+        }
         case 6:
         case 7:
         case 8:
-        case 9:{
-            str(atoi(leftoperand->value) + atoi(rightoperand->value))
-        }
+        case 9:
         case 10:{
-            
+            struct token* rightOperand = (struct token*) pop(tokenStack);
+            struct token* operator = (struct token*) pop(tokenStack);
+            struct token* leftOperand = (struct token*) pop(tokenStack);
+            char value[256];
+            sprintf(value, "%lld", arithmetic(operator, leftOperand, rightOperand));
+            struct token newtoken = tokenize(value, strlen(value));
+            push(tokenStack, TOKEN, &newtoken);
+            break;
         }
         case 11:{
             struct token* token = (struct token*) pop(tokenStack);
@@ -350,19 +422,13 @@ void reduce(int rule){
     }
 }
 
-struct token* evaluate(struct token* operator, struct token* leftoperand, struct token* rightoperand){
-    long long leftVal = atoi(leftoperand->value);
-    long long rightVal;
-    if (rightoperand != NULL) rightVal = atoi(rightoperand->value);
 
-    int result;
-    switch (operator->type){
-        case F:
-        case NOT:{
-            result = ~leftVal;
-            break;
-        }
+long long arithmetic(struct token* operator, struct token* leftoperand, struct token* rightoperand){
+    long long leftVal = strtoll(leftoperand, NULL, 10);
+    long long rightVal = strtoll(rightoperand, NULL, 10);
 
+    long long result;
+    switch(operator->type){
         case AND:{
             result = leftVal & rightVal;
             break;
@@ -384,20 +450,76 @@ struct token* evaluate(struct token* operator, struct token* leftoperand, struct
             break;
         }
     }
-    char value[256];
-    sprintf()
-    struct token token = tokenize()
+    return result;
+}
+
+int getFunction(char* function){
+    if (*function == '\0') return -1;
+    switch (*function){
+        case 'n':
+            return 0;
+            break;
+        case 'x':
+            return 1;
+            break;
+        case 'l':{
+            if (*(function+1) == 's'){
+                return 2;
+                break;
+            }
+            if (*(function+1) == 'r'){
+                return 3;
+                break;
+            }
+        }
+        case 'r':{
+            if (*(function+1) == 's'){
+                return 4;
+                break;
+            }
+            if (*(function+1) == 'r'){
+                return 5;
+                break;
+            }
+        }
+    }
+}
+
+
+long long evaluate(struct token* function, struct token* leftoperand, struct token* rightoperand){
+    long long leftVal = strtoll(leftoperand->value, NULL, 10);
+    if (rightoperand == NULL){
+        return ~leftVal;
+    }
+    long long rightVal = strtoll(rightoperand->value, NULL, 10);
+
+    long long result;
+    switch (getFunction(function->value)){
+        case 0:
+            break;
+        case 1:
+            result = leftVal ^ rightVal;
+            break;
+        case 2:
+            result = leftVal >> rightVal;
+            break;
+        case 3:
+            result = (leftVal << rightVal)|(leftVal >> (64LL - rightVal));
+            break;
+        case 4:
+            result = leftVal << rightVal;
+            break;
+        case 5:
+            result = (leftVal >> rightVal)|(leftVal << (64 - rightVal));
+            break;
+    }
+    return result;
 }
 
 
 
 
-struct Stack *stateStack;
-struct Stack *tokenStack;
-
 int main(){
-    stateStack = createStack();
-    tokenStack = createStack();
 
     //compile the regex pattern
     regexVal = regcomp(&regex, "[a-zA-Z0-9]+|[^[:alnum:]]", REG_EXTENDED);
@@ -452,25 +574,35 @@ int main(){
 
 
     }
-    push(stateStack, STATE, 0);
-    while (1){
-        if (tokenIndex == sizeof(tokens)/sizeof(tokens[0])){
-            printf("Error!\n");
-        }
-        struct token nextToken = tokens[tokenIndex+1];
-        int action[] = parsingTable[*((int*)peek(stateStack))][nextToken.type];
-        switch (action[0]){
-            case -1: {
-                if (tokens[1].type != EQ) printf("%s", ((struct token *) peek(tokenStack))->value);
-                return 0;
+    while(continuation_condition){
+        stateStack = createStack();
+        tokenStack = createStack();
+        push(stateStack, STATE, 0);
+        int condition = 1;
+        while (condition){
+            if (tokenIndex == sizeof(tokens)/sizeof(tokens[0])){
+                printf("Error!\n");
             }
-            case 0: printf("Error!\n"); return 0;
-            case 1: shift(action[1], nextToken.type); tokenIndex++; break;
-            case 2: reduce(action[1]); break;
-            case 3: goTo(nextToken.type); tokenIndex++; break;
-        }
+            struct token nextToken = tokens[tokenIndex+1];
+            int action[] = parsingTable[*((int*)peek(stateStack))][nextToken.type];
+            switch (action[0]){
+                case -1: {
+                    if (tokens[1].type != EQ) printf("%s", ((struct token *) peek(tokenStack))->value);
+                    condition = 0;
+                    break;
+                }
+                case 0: printf("Error!\n"); condition = 0; break;
+                case 1: shift(action[1], nextToken.type); tokenIndex++; break;
+                case 2: reduce(action[1]); break;
+                case 3: goTo(nextToken.type); tokenIndex++; break;
+            }
 
+        }
+        free(stateStack);
+        free(tokenStack);
+        free(tokens);
     }
+
 
 
     regfree(&regex);
