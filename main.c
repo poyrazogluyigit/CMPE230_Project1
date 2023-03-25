@@ -83,7 +83,10 @@ const char *strings[] = {"S", "V", "E", "F", "I", "NOT", "AND", "OR", "MULT", "A
 
 const char *uniKeys[] = {",","-","","|","","&","=","(",")","*","+"};
 const enum type uniTypes[] = {COMM, SUB, -1 , OR, -1, AND, EQ, OBR, CBR, MULT, ADD};
+
+
 const char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
+
 
 const int parsingTable[80][17][2] = {{{1, 3}, {0,0}, {1, 4}, {0,0}, {1, 5}, {0,0}, {1, 6}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {1, 7}, {0,0}, {0,0}, {3, 1}, {3, 2}},
 {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {-1,-1}, {0,0}, {0,0}, {0,0}},
@@ -448,7 +451,70 @@ long long arithmetic(struct token* operator, struct token* leftoperand, struct t
         case SUB:{
             result = leftVal - rightVal;
             break;
+        } 
+    }
+    return result;
+}
+
+int getFunction(char* function){
+    if (*function == '\0') return -1;
+    switch (*function){
+        case 'n':
+            return 0;
+            break;
+        case 'x':
+            return 1;
+            break;
+        case 'l':{
+            if (*(function+1) == 's'){
+                return 2;
+                break;
+            }
+            if (*(function+1) == 'r'){
+                return 3;
+                break;
+            }
         }
+        case 'r':{
+            if (*(function+1) == 's'){
+                return 4;
+                break;
+            }
+            if (*(function+1) == 'r'){
+                return 5;
+                break;
+            }
+        }
+    }
+}
+
+
+long long evaluate(struct token* function, struct token* leftoperand, struct token* rightoperand){
+    long long leftVal = strtoll(leftoperand->value, NULL, 10);
+    if (rightoperand == NULL){
+        return ~leftVal;
+    }
+    long long rightVal = strtoll(rightoperand->value, NULL, 10);
+
+    long long result;
+    switch (getFunction(function->value)){
+        case 0:
+            break;
+        case 1:
+            result = leftVal ^ rightVal;
+            break;
+        case 2:
+            result = leftVal >> rightVal;
+            break;
+        case 3:
+            result = (leftVal << rightVal)|(leftVal >> (64LL - rightVal));
+            break;
+        case 4:
+            result = leftVal << rightVal;
+            break;
+        case 5:
+            result = (leftVal >> rightVal)|(leftVal << (64 - rightVal));
+            break;
     }
     return result;
 }
