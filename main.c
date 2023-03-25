@@ -2,6 +2,8 @@
 #include <regex.h>
 #include <string.h>
 #include <ctype.h>
+
+#define TOKEN_SIZE 256
        
 regex_t regex;
 regmatch_t match[1];
@@ -11,8 +13,6 @@ char msgbuf[257];
 
 struct token tokens[256];
 
-
-#define TOKEN_SIZE 256
 
 
 //enum corresponding to non-terminals and terminals 
@@ -37,12 +37,6 @@ enum type{
 };
 
 
-const char *strings[] = {"S", "V", "E", "F", "I", "NOT", "AND", "OR", "MULT", "ADD", "COMM", "SUB", "OBR", "CBR", "EQ"};
-
-char *uniKeys[] = {",","-","","|","","&","=","(",")","*","+"};
-enum type uniTypes[] = {COMM, SUB, -1 , OR, -1, AND, EQ, OBR, CBR, MULT, ADD};
-char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
-
 /*
     Each lexeme can be represented as a token.
     type -> enum corresponding to the type of the lexeme
@@ -52,55 +46,6 @@ struct token{
     enum type type;
     char value[TOKEN_SIZE];
 };
-
-
-int isNumber(char *string){
-    while (*string != '\0'){
-        if (isdigit(*string) == 0) return 0;
-        string++;
-    }
-    return 1;
-}
-
-
-
-//very dangerous return value on failure
-//explicitly check failure with type == -1
-enum type getType(char *string, int len){
-    if (isNumber(string)) return I;
-    else{
-        if (len > 1){
-            for (int i = 0; i < 6; i++){
-                if (strcmp((const char*)string, (const char*)keywords[i]) == 0){
-                    if (i == 0) return NOT; else return F;}
-            }
-            return V;
-        } 
-        //either f or v
-        else{
-            int ascii = (int) *string;
-            ascii = ascii % 11;
-            int k = strcmp(((const char*)uniKeys[ascii]), (const char*)string);
-            if (k == 0){
-                if (uniTypes[ascii] != -1) return uniTypes[ascii];
-            }
-        }   return V;
-    }
-}
-
-
-//tokenizes a given string.
-//does not check for whitespaces and the behavior is 
-//undefined for whitespaces.
-struct token tokenize(char *string, int len){
-    enum type type = getType(string, len);
-    //char tokSt[len+1];
-    //strncpy(tokSt, string, len+1);
-    struct token token;
-    token.type = type;
-    strncpy(token.value, string, len+1);
-    return token;
-}
 
 
 
@@ -124,63 +69,18 @@ struct Stack {
     int size;
 };
 
-struct Stack *createStack(){
-    struct Stack *stack = (struct Stack *)malloc(sizeof(struct Stack));
-    stack->top = NULL;
-    stack->size = 0;
-    return stack;
-}
-
-void push(struct Stack *stack, nodeType type, void* data){
-    struct Node *node = (struct Node *)malloc(sizeof(struct Node));
-    if (type == TOKEN) {
-        node->type = TOKEN;
-        node->token = (struct token *)data;
-    } else {
-        node->type = STATE;
-        node->state = (int)data;
-    }
-    node->next = stack->top;
-    stack->top = node;
-    stack->size++;
-}
 
 
-void* pop(struct Stack *stack){
-    if (stack->size == 0){
-        return NULL;
-    }
-    struct Node *node = stack->top;
-    stack->top = node->next;
-    stack->size--;
-    if (node->type == TOKEN){
-        struct token *data = node->token;
-        free(node);
-        return data;
-    }
-    else if (node->type == STATE){
-        int data = node->state;
-        free(node);
-        return (void *)data;
-    }
-}
 
-void* peek(struct Stack *stack){
-    if (stack->size == 0){
-        return NULL;
-    }
-    struct Node *node = stack->top;
-    if (node->type == TOKEN){
-        struct token *data = node->token;
-        return data;
-    }
-    else if (node->type == STATE){
-        int data = node->state;
-        return (void *)data;
-    }
-}
 
-int states[80][17][2] = {{{1, 3}, {0,0}, {1, 4}, {0,0}, {1, 5}, {0,0}, {1, 6}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {1, 7}, {0,0}, {0,0}, {3, 1}, {3, 2}},
+
+const char *strings[] = {"S", "V", "E", "F", "I", "NOT", "AND", "OR", "MULT", "ADD", "COMM", "SUB", "OBR", "CBR", "EQ"};
+
+const char *uniKeys[] = {",","-","","|","","&","=","(",")","*","+"};
+const enum type uniTypes[] = {COMM, SUB, -1 , OR, -1, AND, EQ, OBR, CBR, MULT, ADD};
+const char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
+
+const int parsingTable[80][17][2] = {{{1, 3}, {0,0}, {1, 4}, {0,0}, {1, 5}, {0,0}, {1, 6}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {1, 7}, {0,0}, {0,0}, {3, 1}, {3, 2}},
 {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {-1,-1}, {0,0}, {0,0}, {0,0}},
 {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {1, 8}, {1, 9}, {1, 10}, {1, 11}, {1, 12}, {0,0}, {2, 1}, {0,0}, {0,0}, {0,0}},
 {{0,0}, {1, 13}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {2, 11}, {2, 11}, {2, 11}, {2, 11}, {2, 11}, {0,0}, {2, 11}, {0,0}, {0,0}, {0,0}},
@@ -262,6 +162,113 @@ int states[80][17][2] = {{{1, 3}, {0,0}, {1, 4}, {0,0}, {1, 5}, {0,0}, {1, 6}, {
 {{0,0}, {0,0}, {0,0}, {1, 80}, {0,0}, {0,0}, {0,0}, {1, 30}, {1, 31}, {1, 32}, {1, 33}, {1, 34}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}},
 {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {2, 4}, {0,0}, {2, 4}, {2, 4}, {2, 4}, {2, 4}, {2, 4}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}}};
 
+
+
+
+int isNumber(char *string){
+    while (*string != '\0'){
+        if (isdigit(*string) == 0) return 0;
+        string++;
+    }
+    return 1;
+}
+
+
+
+//very dangerous return value on failure
+//explicitly check failure with type == -1
+enum type getType(char *string, int len){
+    if (isNumber(string)) return I;
+    else{
+        if (len > 1){
+            for (int i = 0; i < 6; i++){
+                if (strcmp((const char*)string, (const char*)keywords[i]) == 0){
+                    if (i == 0) return NOT; else return F;}
+            }
+            return V;
+        } 
+        //either f or v
+        else{
+            int ascii = (int) *string;
+            ascii = ascii % 11;
+            int k = strcmp(((const char*)uniKeys[ascii]), (const char*)string);
+            if (k == 0){
+                if (uniTypes[ascii] != -1) return uniTypes[ascii];
+            }
+        }   return V;
+    }
+}
+
+
+//tokenizes a given string.
+//does not check for whitespaces and the behavior is 
+//undefined for whitespaces.
+struct token tokenize(char *string, int len){
+    enum type type = getType(string, len);
+    //char tokSt[len+1];
+    //strncpy(tokSt, string, len+1);
+    struct token token;
+    token.type = type;
+    strncpy(token.value, string, len+1);
+    return token;
+}
+
+
+struct Stack *createStack(){
+    struct Stack *stack = (struct Stack *)malloc(sizeof(struct Stack));
+    stack->top = NULL;
+    stack->size = 0;
+    return stack;
+}
+
+void push(struct Stack *stack, nodeType type, void* data){
+    struct Node *node = (struct Node *)malloc(sizeof(struct Node));
+    if (type == TOKEN) {
+        node->type = TOKEN;
+        node->token = (struct token *)data;
+    } else {
+        node->type = STATE;
+        node->state = (int)data;
+    }
+    node->next = stack->top;
+    stack->top = node;
+    stack->size++;
+}
+
+
+void* pop(struct Stack *stack){
+    if (stack->size == 0){
+        return NULL;
+    }
+    struct Node *node = stack->top;
+    stack->top = node->next;
+    stack->size--;
+    if (node->type == TOKEN){
+        struct token *data = node->token;
+        free(node);
+        return data;
+    }
+    else if (node->type == STATE){
+        int data = node->state;
+        free(node);
+        return (void *)data;
+    }
+}
+
+void* peek(struct Stack *stack){
+    if (stack->size == 0){
+        return NULL;
+    }
+    struct Node *node = stack->top;
+    if (node->type == TOKEN){
+        struct token *data = node->token;
+        return data;
+    }
+    else if (node->type == STATE){
+        int data = node->state;
+        return (void *)data;
+    }
+}
 
 
 int main(){
