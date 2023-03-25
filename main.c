@@ -270,8 +270,8 @@ void* peek(struct Stack *stack){
     }
 }
 
-void reduce(int rule){
-
+char* itos(int number){
+    
 }
 
 void goTo(int token){
@@ -281,6 +281,90 @@ void goTo(int token){
 void shift(int state, int token){
     push(stateStack, STATE, state);
     goTo(token);
+}
+
+void reduce(int rule){
+    switch (rule){
+        case 0:{
+            struct token* token = (struct token*) pop(tokenStack);
+            token->type = Sp;
+            push(tokenStack, TOKEN, token);
+            break;
+        }
+        case 1:{
+            struct token* token = (struct token*) pop(tokenStack);
+            token->type = S;
+            push(tokenStack, TOKEN, token);
+            break;
+        }
+        case 2:
+        case 3:{
+            pop(tokenStack);
+            struct token* token = (struct token*) pop(tokenStack);
+            pop(tokenStack);
+            push(tokenStack, TOKEN, token);
+            break;
+        }
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+        case 10:{
+            
+        }
+        case 11:{
+            struct token* token = (struct token*) pop(tokenStack);
+            //get value from hashmap, change value
+            token->type = E;
+            push(tokenStack, TOKEN, token);
+            break;
+        }
+        case 12:{
+            struct token* token = (struct token*) pop(tokenStack);
+            token->type = E;
+            push(tokenStack, TOKEN, token);
+            break;
+        }
+    }
+}
+
+struct token* evaluate(struct token* operator, struct token* leftoperand, struct token* rightoperand){
+    int leftVal = atoi(leftoperand->value);
+    int rightVal;
+    if (rightoperand != NULL) rightVal = atoi(rightoperand->value);
+
+    int result;
+    switch (operator->type){
+        case F:
+        case NOT:{
+            result = ~leftVal;
+            break;
+        }
+
+        case AND:{
+            result = leftVal & rightVal;
+            break;
+        }
+        case OR:{
+            result = leftVal | rightVal;
+            break;
+        }
+        case MULT:{
+            result = leftVal * rightVal;
+            break;
+        }
+        case ADD:{
+            result = leftVal + rightVal;
+            break;
+        }
+        case SUB:{
+            result = leftVal - rightVal;
+            break;
+        }
+    }
+    struct token token = tokenize()
 }
 
 
