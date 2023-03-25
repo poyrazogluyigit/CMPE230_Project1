@@ -378,28 +378,22 @@ int getFunction(char* function){
     switch (*function){
         case 'n':
             return 0;
-            break;
         case 'x':
             return 1;
-            break;
         case 'l':{
             if (*(function+1) == 's'){
                 return 2;
-                break;
             }
             if (*(function+1) == 'r'){
                 return 3;
-                break;
             }
         }
         case 'r':{
             if (*(function+1) == 's'){
                 return 4;
-                break;
             }
             if (*(function+1) == 'r'){
                 return 5;
-                break;
             }
         }
     }
