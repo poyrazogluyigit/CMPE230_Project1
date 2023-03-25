@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define TOKEN_SIZE 5
+#define TOKEN_SIZE 256
 
 
 //enum corresponding to non-terminals and terminals 
