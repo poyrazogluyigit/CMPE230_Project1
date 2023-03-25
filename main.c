@@ -237,8 +237,7 @@ int hashFunction(char *key, int len){
     return hash % len;
 }
 
-void put(struct mapElement arr[], char *key, int value){
-
+void put_func(struct mapElement arr[], char *key, int value){
     int hash = hashFunction(key, sizeof(arr)/sizeof(arr[0]));
     int i = 0;
     while (arr[hash].key != ""){
@@ -269,9 +268,16 @@ struct mapElement* expand(struct mapElement arr[]){
     struct mapElement *newVariables = (struct mapElement *)malloc(2 * sizeof(arr));
     initMap(newVariables, 2*len);
     for (int i = 0; i < 2*len; i++){
-        put(newVariables, arr[i].key, arr[i].value);
+        put_func(newVariables, arr[i].key, arr[i].value);
     }
     return newVariables;
+}
+
+void put(struct mapElement arr[], char *key, int value){
+    if (nOfElements == sizeof(arr)/sizeof(arr[0])){
+        arr = expand(arr);
+    }
+    put_func(arr, key, value);
 }
 
 struct Stack *createStack(){
@@ -334,6 +340,99 @@ struct token tokens[256];
 struct Stack *stateStack;
 struct Stack *tokenStack;
 
+
+long long arithmetic(struct token* operator, struct token* leftoperand, struct token* rightoperand){
+    long long leftVal = strtoll(leftoperand, NULL, 10);
+    long long rightVal = strtoll(rightoperand, NULL, 10);
+
+    long long result;
+    switch(operator->type){
+        case AND:{
+            result = leftVal & rightVal;
+            break;
+        }
+        case OR:{
+            result = leftVal | rightVal;
+            break;
+        }
+        case MULT:{
+            result = leftVal * rightVal;
+            break;
+        }
+        case ADD:{
+            result = leftVal + rightVal;
+            break;
+        }
+        case SUB:{
+            result = leftVal - rightVal;
+            break;
+        }
+    }
+    return result;
+}
+
+int getFunction(char* function){
+    if (*function == '\0') return -1;
+    switch (*function){
+        case 'n':
+            return 0;
+            break;
+        case 'x':
+            return 1;
+            break;
+        case 'l':{
+            if (*(function+1) == 's'){
+                return 2;
+                break;
+            }
+            if (*(function+1) == 'r'){
+                return 3;
+                break;
+            }
+        }
+        case 'r':{
+            if (*(function+1) == 's'){
+                return 4;
+                break;
+            }
+            if (*(function+1) == 'r'){
+                return 5;
+                break;
+            }
+        }
+    }
+}
+
+
+long long evaluate(struct token* function, struct token* leftoperand, struct token* rightoperand){
+    long long leftVal = strtoll(leftoperand->value, NULL, 10);
+    if (rightoperand == NULL){
+        return ~leftVal;
+    }
+    long long rightVal = strtoll(rightoperand->value, NULL, 10);
+
+    long long result;
+    switch (getFunction(function->value)){
+        case 0:
+            break;
+        case 1:
+            result = leftVal ^ rightVal;
+            break;
+        case 2:
+            result = leftVal >> rightVal;
+            break;
+        case 3:
+            result = (leftVal << rightVal)|(leftVal >> (64LL - rightVal));
+            break;
+        case 4:
+            result = leftVal << rightVal;
+            break;
+        case 5:
+            result = (leftVal >> rightVal)|(leftVal << (64 - rightVal));
+            break;
+    }
+    return result;
+}
 
 void goTo(int token){
     push(tokenStack, TOKEN, (void*)token);
@@ -423,163 +522,6 @@ void reduce(int rule){
             break;
         }
     }
-}
-
-
-long long arithmetic(struct token* operator, struct token* leftoperand, struct token* rightoperand){
-    long long leftVal = strtoll(leftoperand, NULL, 10);
-    long long rightVal = strtoll(rightoperand, NULL, 10);
-
-    long long result;
-    switch(operator->type){
-        case AND:{
-            result = leftVal & rightVal;
-            break;
-        }
-        case OR:{
-            result = leftVal | rightVal;
-            break;
-        }
-        case MULT:{
-            result = leftVal * rightVal;
-            break;
-        }
-        case ADD:{
-            result = leftVal + rightVal;
-            break;
-        }
-        case SUB:{
-            result = leftVal - rightVal;
-            break;
-        } 
-    }
-    return result;
-}
-
-int getFunction(char* function){
-    if (*function == '\0') return -1;
-    switch (*function){
-        case 'n':
-            return 0;
-            break;
-        case 'x':
-            return 1;
-            break;
-        case 'l':{
-            if (*(function+1) == 's'){
-                return 2;
-                break;
-            }
-            if (*(function+1) == 'r'){
-                return 3;
-                break;
-            }
-        }
-        case 'r':{
-            if (*(function+1) == 's'){
-                return 4;
-                break;
-            }
-            if (*(function+1) == 'r'){
-                return 5;
-                break;
-            }
-        }
-    }
-}
-
-
-long long evaluate(struct token* function, struct token* leftoperand, struct token* rightoperand){
-    long long leftVal = strtoll(leftoperand->value, NULL, 10);
-    if (rightoperand == NULL){
-        return ~leftVal;
-    }
-    long long rightVal = strtoll(rightoperand->value, NULL, 10);
-
-    long long result;
-    switch (getFunction(function->value)){
-        case 0:
-            break;
-        case 1:
-            result = leftVal ^ rightVal;
-            break;
-        case 2:
-            result = leftVal >> rightVal;
-            break;
-        case 3:
-            result = (leftVal << rightVal)|(leftVal >> (64LL - rightVal));
-            break;
-        case 4:
-            result = leftVal << rightVal;
-            break;
-        case 5:
-            result = (leftVal >> rightVal)|(leftVal << (64 - rightVal));
-            break;
-    }
-    return result;
-}
-
-int getFunction(char* function){
-    if (*function == '\0') return -1;
-    switch (*function){
-        case 'n':
-            return 0;
-            break;
-        case 'x':
-            return 1;
-            break;
-        case 'l':{
-            if (*(function+1) == 's'){
-                return 2;
-                break;
-            }
-            if (*(function+1) == 'r'){
-                return 3;
-                break;
-            }
-        }
-        case 'r':{
-            if (*(function+1) == 's'){
-                return 4;
-                break;
-            }
-            if (*(function+1) == 'r'){
-                return 5;
-                break;
-            }
-        }
-    }
-}
-
-
-long long evaluate(struct token* function, struct token* leftoperand, struct token* rightoperand){
-    long long leftVal = strtoll(leftoperand->value, NULL, 10);
-    if (rightoperand == NULL){
-        return ~leftVal;
-    }
-    long long rightVal = strtoll(rightoperand->value, NULL, 10);
-
-    long long result;
-    switch (getFunction(function->value)){
-        case 0:
-            break;
-        case 1:
-            result = leftVal ^ rightVal;
-            break;
-        case 2:
-            result = leftVal >> rightVal;
-            break;
-        case 3:
-            result = (leftVal << rightVal)|(leftVal >> (64LL - rightVal));
-            break;
-        case 4:
-            result = leftVal << rightVal;
-            break;
-        case 5:
-            result = (leftVal >> rightVal)|(leftVal << (64 - rightVal));
-            break;
-    }
-    return result;
 }
 
 
