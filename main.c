@@ -584,7 +584,7 @@ int main(){
 
     printf("> ");
     //compile the regex pattern
-    regexVal = regcomp(&regex, "[a-zA-Z0-9]+|[^[:alnum:]]", REG_EXTENDED);
+    regexVal = regcomp(&regex, "([a-zA-Z]+|[0-9]+)|[^[:alnum:]]", REG_EXTENDED);
 
     if (regexVal) {
     fprintf(stderr, "Regex compilation error\n");
