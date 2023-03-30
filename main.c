@@ -620,8 +620,9 @@ int main(){
             strncpy(tokenStr, msgbuf + lastPtr + startBuffer, len);
             tokenStr[len] = '\0';
             
-            const char comment = '%';
-            if (strcmp(tokenStr, &comment) == 0) break;
+            const char *comment = "%";
+            int cmp = strcmp(tokenStr, comment);
+            if (cmp == 0) break;
             //tokenize and add to array
             if (!isspace((int) tokenStr[0])) {
                 struct token *token = tokenize(tokenStr, len);
@@ -649,6 +650,10 @@ int main(){
 
         int step = 0;
         while (condition) {
+            if ((step == 0) && (tokens[0].type == EOL)){
+                printf("> ");
+                break;
+            }
             if (tokenIndex == TOKEN_SIZE-1) {
                 //printf("Error!\n");
                 break;
