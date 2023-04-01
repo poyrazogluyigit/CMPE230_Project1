@@ -1,0 +1,38 @@
+#ifndef CMPE230_PROJECT1_DATATYPES_H
+#define CMPE230_PROJECT1_DATATYPES_H
+
+struct Node{
+    struct token *data;
+    struct Node *next;
+    int state;
+};
+
+struct Stack{
+    struct Node *top;
+    int capacity;
+};
+
+
+struct intNode{
+    int data;
+    struct intNode *next;
+};
+
+struct intStack{
+    struct intNode *top;
+    int capacity;
+};
+
+
+void init(struct Stack **stack);
+void push(struct Stack *stack, struct token *data);
+struct token *pop(struct Stack *stack);
+struct token *peek(struct Stack *Stack);
+
+void i_init(struct intStack **Stack);
+void i_push(struct intStack *stack, int data);
+int i_pop(struct intStack *Stack);
+int i_peek(struct intStack *Stack);
+
+
+#endif //CMPE230_PROJECT1_DATATYPES_H

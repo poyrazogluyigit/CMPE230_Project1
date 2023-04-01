@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "lexer.h"
+#include "stacks.h"
 
 #define TOKEN_SIZE 256
 #define TABLE_SIZE 128
@@ -18,87 +20,6 @@ char msgbuf[257];
 int tokenIndex = 0;
 
 int isAssigned = 0;
-
-
-//enum corresponding to non-terminals and terminals 
-//declared within the grammar of the language.
-enum type{
-    V, 
-    EQ,          //61 (6 mod 11)
-    OBR,         //40 (7 mod 11)
-    CBR,         //41 (8 mod 11)
-    F,   
-    COMM,       //44 (0 mod 11)
-    NOT,        
-    AND,         //38 (5 mod 11)
-    OR,          //124 (3 mod 11)
-    MULT,        //42 (9 mod 11)
-    ADD,       //43 (10 mod 11)
-    SUB,        //45 (1 mod 11)
-    I,        
-    EOL,        
-    Sp,
-    S,
-    E          
-
-};
-
-
-/*
-    Each lexeme can be represented as a token.
-    type -> enum corresponding to the type of the lexeme
-    value -> value of the lexeme stored as char[]
-*/
-struct token{
-    enum type type;
-    char value[TOKEN_SIZE+1];
-};
-
-
-
-typedef enum nodeType {
-    STATE,
-    TOKEN
-} nodeType;
-
-
-struct Node{
-    struct token *data;
-    struct Node *next;
-    int state;
-};
-
-struct Stack{
-    struct Node *top;
-    int capacity;
-};
-
-
-struct intNode{
-    int data;
-    struct intNode *next;
-};
-
-struct intStack{
-    struct intNode *top;
-    int capacity;
-};
-
-
-
-
-
-
-
-
-
-const char *strings[] = {"S", "V", "E", "F", "I", "NOT", "AND", "OR", "MULT", "ADD", "COMM", "SUB", "OBR", "CBR", "EQ"};
-
-const char *uniKeys[] = {",","-","","|","","&","=","(",")","*","+"};
-const enum type uniTypes[] = {COMM, SUB, -1 , OR, -1, AND, EQ, OBR, CBR, MULT, ADD};
-
-
-const char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
 
 char *keys[TABLE_SIZE];
 long long variables[TABLE_SIZE];
@@ -189,15 +110,6 @@ const int parsingTable[81][17][2] = {{{1, 3}, {0,0}, {1, 4}, {0,0}, {1, 5}, {0,0
 
 
 
-
-int isNumber(char *string){
-    while (*string != '\0'){
-        if (isdigit(*string) == 0) return 0;
-        string++;
-    }
-    return 1;
-}
-
 long long power(long long base, long long exp){
     long long result = 1;
     for (int i = 0; i < exp; i++){
@@ -237,127 +149,6 @@ void put(char* string, long long value){
     variables[hash+i] = value;
     keys[hash+i] = string;
 }
-
-
-
-//very dangerous return value on failure
-//explicitly check failure with type == -1
-enum type getType(char *string, int len){
-    if (isNumber(string)) return I;
-    else{
-        if (len > 1){
-            for (int i = 0; i < 6; i++){
-                if (strcmp((const char*)string, (const char*)keywords[i]) == 0){
-                    if (i == 0) return NOT; else return F;}
-            }
-            return V;
-        } 
-        //either f or v
-        else{
-            char eol[2] = "$";
-            int x = strcmp((const char*)string, eol);
-            if (x == 0) return EOL;
-            int ascii = (int) *string;
-            ascii = ascii % 11;
-            int k = strcmp(((const char*)uniKeys[ascii]), (const char*)string);
-            if (k == 0){
-                if (uniTypes[ascii] != -1) return uniTypes[ascii];
-            }
-        }   return V;
-    }
-}
-
-
-//tokenizes a given string.
-//does not check for whitespaces and the behavior is 
-//undefined for whitespaces.
-struct token *tokenize(char *string, int len){
-    enum type type = getType(string, len);
-    struct token *token = calloc(1, sizeof(struct token));
-    token->type = type;
-    strncpy(token->value, string, len+1);
-    return token;
-}
-
-
-
-
-
-
-
-
-void init(struct Stack **stack){
-    struct Stack *newStack = (struct Stack *)malloc(sizeof(struct Stack));
-    newStack->capacity = 0;
-    newStack->top = NULL;
-
-    *stack = newStack;
-
-}
-
-void push(struct Stack *stack, struct token *data){
-    struct Node *newNode = (struct Node *)malloc(sizeof(struct Node));
-    newNode->data = data;
-    newNode->next = (stack->top);
-    stack->top = newNode;
-}
-
-struct token *pop(struct Stack *stack){
-    struct Node *temp = (stack->top);
-    stack->top = ((stack->top)->next);
-    struct token *data = temp->data;
-    free(temp);
-    return data;
-}
-
-
-struct token *peek(struct Stack *stack){
-    return (stack->top)->data;
-}
-
-
-
-
-
-
-void i_init(struct intStack **stack){
-    struct intStack *newStack = (struct intStack *)malloc(sizeof(struct intStack));
-    newStack->capacity = 0;
-    newStack->top = NULL;
-
-    *stack = newStack;
-}
-
-void i_push(struct intStack *stack, int data){
-    struct intNode *newNode = (struct intNode *)malloc(sizeof(struct intNode));
-    newNode->data = data;
-    struct intNode *temp = stack->top;
-    newNode->next = temp;
-    stack->top = newNode;
-}
-
-int i_pop(struct intStack *stack){
-    struct intNode *temp = stack->top;
-    stack->top = ((stack->top)->next);
-    int data = temp->data;
-    free(temp);
-    return data;
-}
-
-int i_peek(struct intStack *stack){
-    return (stack->top)->data;
-}
-
-
-
-
-
-
-
-
-
-
-
 
 //struct token tokens[];
 struct intStack *stateStack;
@@ -573,9 +364,6 @@ void reduce(int rule){
     }
 }
 
-
-
-
 int main(){
 
     for (int i = 0; i < 128; i++){
@@ -584,7 +372,7 @@ int main(){
 
     printf("> ");
     //compile the regex pattern
-    regexVal = regcomp(&regex, "([a-zA-Z]+|[0-9]+)|[^[:alnum:]]", REG_EXTENDED);
+    regexVal = regcomp(&regex, "[a-zA-Z]+|[0-9]+|[^[:alnum:]]", REG_EXTENDED);
 
     if (regexVal) {
     fprintf(stderr, "Regex compilation error\n");
@@ -620,6 +408,7 @@ int main(){
             strncpy(tokenStr, msgbuf + lastPtr + startBuffer, len);
             tokenStr[len] = '\0';
             
+            //check for beginning of the comment 
             const char *comment = "%";
             int cmp = strcmp(tokenStr, comment);
             if (cmp == 0) break;

@@ -2,30 +2,34 @@
 #include <regex.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include "lexer.h"
 
-#define TOKEN_SIZE 256
+/* #define TOKEN_SIZE 256
 
 
 //enum corresponding to non-terminals and terminals 
 //declared within the grammar of the language.
 enum type{
-    S, 
-    V,    //terminal? data type
-    E,
-    F,    //terminal data type
-    I,    //terminal data type
-    NOT, 
-    AND,        //38 (5 mod 11)
-    OR,         //124 (3 mod 11)
-    MULT,       //42 (9 mod 11)
-    ADD,        //43 (10 mod 11)
+    V, 
+    EQ,          //61 (6 mod 11)
+    OBR,         //40 (7 mod 11)
+    CBR,         //41 (8 mod 11)
+    F,   
     COMM,       //44 (0 mod 11)
+    NOT,        
+    AND,         //38 (5 mod 11)
+    OR,          //124 (3 mod 11)
+    MULT,        //42 (9 mod 11)
+    ADD,       //43 (10 mod 11)
     SUB,        //45 (1 mod 11)
-    OBR,        //40 (7 mod 11)
-    CBR,        //41 (8 mod 11)
-    EQ          //61 (6 mod 11)
+    I,        
+    EOL,        
+    Sp,
+    S,
+    E          
 
-};
+}; */
 
 
 const char *strings[] = {"S", "V", "E", "F", "I", "NOT", "AND", "OR", "MULT", "ADD", "COMM", "SUB", "OBR", "CBR", "EQ"};
@@ -39,11 +43,11 @@ char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
     type -> enum corresponding to the type of the lexeme
     value -> value of the lexeme stored as char[]
 */
-struct token{
+/* struct token{
     enum type type;
-    char value[TOKEN_SIZE];
+    char value[TOKEN_SIZE+1];
 };
-
+ */
 
 int isNumber(char *string){
     while (*string != '\0'){
@@ -69,6 +73,9 @@ enum type getType(char *string, int len){
         } 
         //either f or v
         else{
+            char eol[2] = "$";
+            int x = strcmp((const char*)string, eol);
+            if (x == 0) return EOL;
             int ascii = (int) *string;
             ascii = ascii % 11;
             int k = strcmp(((const char*)uniKeys[ascii]), (const char*)string);
@@ -79,22 +86,19 @@ enum type getType(char *string, int len){
     }
 }
 
-
 //tokenizes a given string.
 //does not check for whitespaces and the behavior is 
 //undefined for whitespaces.
-struct token tokenize(char *string, int len){
+struct token *tokenize(char *string, int len){
     enum type type = getType(string, len);
-    //char tokSt[len+1];
-    //strncpy(tokSt, string, len+1);
-    struct token token;
-    token.type = type;
-    strncpy(token.value, string, len+1);
+    struct token *token = calloc(1, sizeof(struct token));
+    token->type = type;
+    strncpy(token->value, string, len+1);
     return token;
 }
 
 //code used for unit testing
-regex_t regex;
+/* regex_t regex;
 regmatch_t match[1];
 
 int regexVal;
@@ -129,7 +133,7 @@ int main(){
             strncpy(tokenStr, msgbuf+lastPtr+startBuffer, len);
             tokenStr[len] = '\0';
             if (!isspace((int) tokenStr[0])){
-                struct token token = tokenize(tokenStr, len);
+                struct token token = *tokenize(tokenStr, len);
                 tokens[i] = token;
                 i++;
             }
@@ -151,4 +155,4 @@ int main(){
 
 }
 
-#
+# */
