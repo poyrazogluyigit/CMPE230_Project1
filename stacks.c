@@ -5,7 +5,7 @@
 
 void init(struct Stack **stack){
     struct Stack *newStack = (struct Stack *)malloc(sizeof(struct Stack));
-    newStack->capacity = 0;
+    newStack->size = 0;
     newStack->top = NULL;
 
     *stack = newStack;
@@ -39,7 +39,7 @@ struct token *peek(struct Stack *stack){
 
 void i_init(struct intStack **stack){
     struct intStack *newStack = (struct intStack *)malloc(sizeof(struct intStack));
-    newStack->capacity = 0;
+    newStack->size = 0;
     newStack->top = NULL;
 
     *stack = newStack;

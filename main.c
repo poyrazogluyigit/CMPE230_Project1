@@ -3,7 +3,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include "lexer.h"
 #include "stacks.h"
 
@@ -493,7 +492,6 @@ int main(){
                 case 3:
                     i_push(stateStack, currentState);
                     goTo(targetState);
-                    //tokenIndex++;
                     break;
             }
         }

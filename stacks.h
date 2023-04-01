@@ -9,7 +9,7 @@ struct Node{
 
 struct Stack{
     struct Node *top;
-    int capacity;
+    int size;
 };
 
 
@@ -20,7 +20,7 @@ struct intNode{
 
 struct intStack{
     struct intNode *top;
-    int capacity;
+    int size;
 };
 
 
