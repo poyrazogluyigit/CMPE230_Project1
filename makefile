@@ -1,6 +1,5 @@
 AdvCalc: main.o lexer.o stacks.o
 	gcc main.o lexer.o stacks.o -o AdvCalc
-	rm *.o
 
 main.o: main.c lexer.h stacks.h
 	gcc -c main.c
