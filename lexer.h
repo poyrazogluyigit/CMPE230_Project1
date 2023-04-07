@@ -7,24 +7,24 @@
 //declared within the grammar of the language.
 enum type{
     V, 
-    EQ,          //61 (6 mod 11)
-    OBR,         //40 (7 mod 11)
-    CBR,         //41 (8 mod 11)
+    EQ,
+    OBR,
+    CBR,
     F,   
-    COMM,       //44 (0 mod 11)
-    NOT,        
-    AND,         //38 (5 mod 11)
-    OR,          //124 (3 mod 11)
-    MULT,        //42 (9 mod 11)
-    ADD,       //43 (10 mod 11)
-    SUB,        //45 (1 mod 11)
+    COMM,
+    NOT,
+    MULT,
+    ADD,
+    AND,
+    OR,
     I,        
     EOL,        
     Sp,
     S,
-    E          
-
+    E
 };
+
+const char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
 
 struct token{
     enum type type;

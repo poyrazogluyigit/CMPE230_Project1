@@ -5,50 +5,6 @@
 #include <stdlib.h>
 #include "lexer.h"
 
-/* #define TOKEN_SIZE 256
-
-
-//enum corresponding to non-terminals and terminals 
-//declared within the grammar of the language.
-enum type{
-    V, 
-    EQ,          //61 (6 mod 11)
-    OBR,         //40 (7 mod 11)
-    CBR,         //41 (8 mod 11)
-    F,   
-    COMM,       //44 (0 mod 11)
-    NOT,        
-    AND,         //38 (5 mod 11)
-    OR,          //124 (3 mod 11)
-    MULT,        //42 (9 mod 11)
-    ADD,       //43 (10 mod 11)
-    SUB,        //45 (1 mod 11)
-    I,        
-    EOL,        
-    Sp,
-    S,
-    E          
-
-}; */
-
-
-const char *strings[] = {"S", "V", "E", "F", "I", "NOT", "AND", "OR", "MULT", "ADD", "COMM", "SUB", "OBR", "CBR", "EQ"};
-
-char *uniKeys[] = {",","-","","|","","&","=","(",")","*","+"};
-enum type uniTypes[] = {COMM, SUB, -1 , OR, -1, AND, EQ, OBR, CBR, MULT, ADD};
-char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
-
-/*
-    Each lexeme can be represented as a token.
-    type -> enum corresponding to the type of the lexeme
-    value -> value of the lexeme stored as char[]
-*/
-/* struct token{
-    enum type type;
-    char value[TOKEN_SIZE+1];
-};
- */
-
 int isNumber(char *string){
     while (*string != '\0'){
         if (isdigit(*string) == 0) return 0;
@@ -76,11 +32,29 @@ enum type getType(char *string, int len){
             char eol[2] = "$";
             int x = strcmp((const char*)string, eol);
             if (x == 0) return EOL;
-            int ascii = (int) *string;
-            ascii = ascii % 11;
-            int k = strcmp(((const char*)uniKeys[ascii]), (const char*)string);
-            if (k == 0){
-                if (uniTypes[ascii] != -1) return uniTypes[ascii];
+            switch(*string){
+                case ',':
+                    return COMM;
+                case '|':
+                    return OR;
+                case '&':
+                    return AND;
+                case '=':
+                    return EQ;
+                case '(':
+                    return OBR;
+                case ')':
+                    return CBR;
+                case '*':
+                    return MULT;
+                case '/':
+                    return MULT;
+                case '%':
+                    return MULT;
+                case '+':
+                    return ADD;
+                case '-':
+                    return ADD;
             }
         }   return V;
     }
@@ -98,7 +72,9 @@ struct token *tokenize(char *string, int len){
 }
 
 //code used for unit testing
-/* regex_t regex;
+/*
+regex_t regex;
+const char *strings[] = {"V", "EQ", "OBR", "CBR", "F", "COMM", "NOT", "MULT", "ADD", "AND", "OR", "I", "EOL", "Sp", "S", "E"};
 regmatch_t match[1];
 
 int regexVal;
@@ -155,4 +131,4 @@ int main(){
 
 }
 
-# */
+#*/
