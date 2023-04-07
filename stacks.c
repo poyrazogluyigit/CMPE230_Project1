@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include "lexer.h"
 #include "stacks.h"
 
 

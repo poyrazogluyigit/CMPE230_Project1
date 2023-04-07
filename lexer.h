@@ -24,8 +24,6 @@ enum type{
     E
 };
 
-const char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
-
 struct token{
     enum type type;
     char value[TOKEN_SIZE+1];

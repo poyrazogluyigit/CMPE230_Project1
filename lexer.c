@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include "lexer.h"
 
+
+const char *keywords[] = {"not", "xor", "ls", "rs", "lr", "rr"};
+
 int isNumber(char *string){
     while (*string != '\0'){
         if (isdigit(*string) == 0) return 0;
