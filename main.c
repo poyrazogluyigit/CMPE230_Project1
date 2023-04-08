@@ -18,11 +18,13 @@ char msgbuf[257];
 
 
 int tokenIndex = 0;
-
+int intermediateVariableIndex = 0;
 int isAssigned = 0;
 
 char *keys[TABLE_SIZE];
 long long variables[TABLE_SIZE];
+char assigned_variables[TABLE_SIZE];
+
 
 
 
@@ -128,23 +130,51 @@ int toHash(char* string){
     return hash%TABLE_SIZE;
 }
 
+char exists(char* string){
+    int hash = toHash(string);
+    int i;
+    for (i = 0; i < TABLE_SIZE; i++){
+        if (keys[(hash+i)%TABLE_SIZE] != NULL){
+            if (strcmp(keys[(hash+i)%TABLE_SIZE],string) == 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 long long get(char* string){
     int hash = toHash(string);
-    int i = 0;
-    for (int i = 0; i < TABLE_SIZE; i++){
-        if (variables[hash+i] == -1) break;
+    int i;
+    for (i = 0; i < TABLE_SIZE; i++){
+        if (keys[(hash+i)%TABLE_SIZE] != NULL && strcmp(keys[(hash+i)%TABLE_SIZE],string) == 0) {
+            break;
+        }
     }
-    return variables[hash+i];
+    return variables[(hash+i)%TABLE_SIZE];
 }
 
 void put(char* string, long long value){
     int hash = toHash(string);
-    int i = 0;
-    for (int i = 0; i < TABLE_SIZE; i++){
-        if (variables[hash+i] == -1) break;
+    int i;
+    if (!exists(string)) {
+        for (i = 0; i < TABLE_SIZE; i++) {
+            if (assigned_variables[(hash + i) % TABLE_SIZE] == 0) break;
+        }
+        assigned_variables[(hash + i) % TABLE_SIZE] = 1;
+        variables[(hash + i) % TABLE_SIZE] = value;
+        char* keyspace = (char*)malloc((TOKEN_SIZE+1)*sizeof(char));
+        strcpy(keyspace,string);
+        keys[(hash + i) % TABLE_SIZE] = keyspace;
     }
-    variables[hash+i] = value;
-    keys[hash+i] = string;
+    else {
+        for (i = 0; i < TABLE_SIZE; i++){
+            if (keys[(hash+i)%TABLE_SIZE] != NULL && strcmp(keys[(hash+i)%TABLE_SIZE],string) == 0) {
+                break;
+            }
+        }
+        variables[(hash+i)%TABLE_SIZE] = value;
+    }
 }
 
 struct intStack *stateStack;
@@ -282,11 +312,8 @@ void reduce(int rule){
             struct token* var = (struct token*) pop(tokenStack);
             long long value = strtoll(expression->value, NULL, 10);
             put(var->value, value);
-            char string[TOKEN_SIZE+1];
-            sprintf(string, "%lld", value);
-            struct token *newtoken = tokenize(string, strlen(string));
-            newtoken->type = S;
-            push(tokenStack, newtoken);
+            var->type = S;
+            push(tokenStack, var);
             isAssigned = 1;
             i_pop(stateStack);
             i_pop(stateStack);
@@ -354,7 +381,15 @@ void reduce(int rule){
         }
         case 10:{
             struct token* variable = (struct token*) pop(tokenStack);
-            long long value = get(variable->value) == -1 ? 0 : get(variable->value);
+            if (exists(variable->value) == 0) {
+                printf("Variable %s is not assigned a value\n", variable->value);
+                variable->value[0] = '0';
+                variable->value[1] = '\0';
+                variable->type = E;
+                push(tokenStack, variable);
+                break;
+            }
+            long long value = get(variable->value);
             char valStr[TOKEN_SIZE+1];
             sprintf(valStr, "%lld", value);
             strcpy(variable->value, valStr); 
@@ -373,8 +408,9 @@ void reduce(int rule){
 
 int main(){
 
-    for (int i = 0; i < 128; i++){
-        variables[i] = -1;
+    for (int i = 0; i < TABLE_SIZE; i++){
+        assigned_variables[i] = 0;
+        keys[i] = NULL;
     }
 
     printf("> ");
